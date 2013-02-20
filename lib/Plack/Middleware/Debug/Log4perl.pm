@@ -5,7 +5,7 @@ package Plack::Middleware::Debug::Log4perl;
 
 use parent qw(Plack::Middleware::Debug::Base);
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 use Log::Log4perl qw(get_logger :levels);
 use Log::Log4perl::Layout;
@@ -20,25 +20,25 @@ sub run
 {
 	my($self, $env, $panel) = @_;
 
-	if(Log::Log4perl->initialized()) {
+	if (Log::Log4perl->initialized()) {
 
 		if (my $appender = Log::Log4perl->appender_by_name('psgi_debug_panel')) {
 
 			$appender->clear();
 
-			$timer->reset();
+			$timer->reset() if $timer;
 		}
 		else {
 
-		    my $logger = Log::Log4perl->get_logger("");
+			my $logger = Log::Log4perl->get_logger("");
 
-		    # Define a layout
-		    my $layout = Log::Log4perl::Layout::PatternLayout->new("%r >> %p >> %m >> %c >> at %F line %L%n");
+			# Define a layout
+			my $layout = Log::Log4perl::Layout::PatternLayout->new("%r >> %p >> %m >> %c >> at %F line %L%n");
 
-		    # Define an 'in memory' appender
-		    my $appender = Log::Log4perl::Appender->new(
-		    	"Log::Log4perl::Appender::TestBuffer",
-		    	name => "psgi_debug_panel");
+			# Define an 'in memory' appender
+			my $appender = Log::Log4perl::Appender->new(
+				"Log::Log4perl::Appender::TestBuffer",
+				name => "psgi_debug_panel");
 
 			$appender->layout($layout);
 
@@ -56,7 +56,6 @@ sub run
 		if (my $appender = Log::Log4perl->appenders()->{psgi_debug_panel}) {
 
 			my $log = $appender->{appender}->{buffer};
-			$panel->content( sub { $self->render_list_pairs($log) } );
 
 			$log =~ s/ >> /\n/g;
 			my $list = [ split '\n', $log ];
@@ -65,7 +64,6 @@ sub run
 		}
 		else {
 
-			#return $panel->disable;
 			$panel->content( 'Log4perl appender not enabled' );
 		}
 	};
@@ -153,7 +151,13 @@ Log4perl: L<Log::Log4perl>
 
 Plack Debug Panel: L<Plack::Middleware::Debug>
 
-Source Repository: L<https://github.com/miketonks/Plack-Middleware-Debug-Log4perl>
+Source Repository: L<http://github.com/miketonks/Plack-Middleware-Debug-Log4perl>
+
+=head1 AUTHORS
+
+Mike Tonks
+
+Thanks to Lyle Hopkins (Bristol & Bath Perl Mongers) for help with the threading tests.
 
 =head1 LICENSE
 

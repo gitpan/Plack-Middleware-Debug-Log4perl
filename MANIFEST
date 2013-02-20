@@ -18,3 +18,4 @@ t/02_use.t
 t/03_web.t
 t/04_web_threads.t
 t/04_web_with_logging.t
+t/05_web_legacy_config.t
