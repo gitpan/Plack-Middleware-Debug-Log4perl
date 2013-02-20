@@ -5,6 +5,8 @@ package Plack::Middleware::Debug::Log4perl;
 
 use parent qw(Plack::Middleware::Debug::Base);
 
+our $VERSION = '0.02';
+
 use Log::Log4perl qw(get_logger :levels);
 use Log::Log4perl::Layout;
 use Log::Log4perl::Level;
@@ -19,14 +21,14 @@ sub run
 	my($self, $env, $panel) = @_;
 
 	if(Log::Log4perl->initialized()) {
-				
-		if (my $appender = Log::Log4perl->appender_by_name('plack_debug_panel')) {
+
+		if (my $appender = Log::Log4perl->appender_by_name('psgi_debug_panel')) {
 
 			$appender->clear();
 
 			$timer->reset();
 		}
-		else {	
+		else {
 
 		    my $logger = Log::Log4perl->get_logger("");
 
@@ -35,8 +37,8 @@ sub run
 
 		    # Define an 'in memory' appender
 		    my $appender = Log::Log4perl::Appender->new(
-		    	"Log::Log4perl::Appender::TestBuffer", 
-		    	name => "plack_debug_panel");
+		    	"Log::Log4perl::Appender::TestBuffer",
+		    	name => "psgi_debug_panel");
 
 			$appender->layout($layout);
 
@@ -51,11 +53,10 @@ sub run
 	return sub {
 		my $res = shift;
 
-		#$panel->nav_subtitle('Debug');
+		if (my $appender = Log::Log4perl->appenders()->{psgi_debug_panel}) {
 
-		my $log = Log::Log4perl->appender_by_name('plack_debug_panel')->buffer();
-
-		if ($log) {
+			my $log = $appender->{appender}->{buffer};
+			$panel->content( sub { $self->render_list_pairs($log) } );
 
 			$log =~ s/ >> /\n/g;
 			my $list = [ split '\n', $log ];
@@ -102,7 +103,6 @@ sub render_list_pairs {
     my ($self, $list, $sections) = @_;
     if ($sections) {
         $self->render($list_template, { list => $list });
- #       $self->render($list_section_template, { list => $list, sections => $sections });
     }else{
         $self->render($list_template, { list => $list });
     }
